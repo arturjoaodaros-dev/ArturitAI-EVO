@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ArturitAI EVO — Evolved Intelligence Edition</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ArturitAI">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- Terminal (xterm) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+
+<!-- ArturitAI Styles -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     ArturitAI EVO — Body / DOM Shell
+     All IDs and classes are preserved exactly to keep JS bindings intact.
+     ═══════════════════════════════════════════════════════════════════ -->
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<!-- ── Drawer overlay ── -->
+<div id="dOvl" onclick="closeDrawer()"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     DRAWER — History / Settings / Help
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="drawer">
+  <div class="dh">
+    <span class="dlogo">ArturitAI</span>
+    <button class="dcls" onclick="closeDrawer()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="dtabs">
+    <button class="dtab on" onclick="switchDTab(this,'dHistory')">History</button>
+    <button class="dtab"    onclick="switchDTab(this,'dSettings')">Settings</button>
+    <button class="dtab"    onclick="switchDTab(this,'dHelp')">Help</button>
+  </div>
+  <div class="dbody">
+    <!-- History pane -->
+    <div id="dHistory" class="dpane on">
+      <div class="glbl">Recent Chats</div>
+      <div id="histList"></div>
+      <button class="wchip" style="margin-top:10px;width:100%" onclick="clearHistory()">🗑 Clear History</button>
+    </div>
+
+    <!-- Settings pane -->
+    <div id="dSettings" class="dpane">
+      <div class="glbl">Appearance</div>
+      <div class="drow">
+        <span class="dlbl">Theme</span>
+        <button class="dtoggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+      </div>
+      <div class="glbl" style="margin-top:12px">Language</div>
+      <select id="blkLangSel" class="dsel" onchange="S.blkLang=this.value;savePref('lang',this.value)">
+        <option value="python">Python</option>
+        <option value="javascript">JavaScript</option>
+        <option value="typescript">TypeScript</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="rust">Rust</option>
+        <option value="go">Go</option>
+        <option value="ruby">Ruby</option>
+        <option value="php">PHP</option>
+        <option value="swift">Swift</option>
+        <option value="kotlin">Kotlin</option>
+        <option value="csharp">C#</option>
+        <option value="scala">Scala</option>
+        <option value="r">R</option>
+        <option value="luau">Luau</option>
+      </select>
+      <div class="glbl" style="margin-top:12px">API Key (optional)</div>
+      <input id="apiKeyInp" type="password" class="dinp" placeholder="sk-ant-…"
+             oninput="S.apiKey=this.value" autocomplete="off">
+      <div class="glbl" style="margin-top:12px">Model</div>
+      <select id="modelSel" class="dsel" onchange="S.model=this.value">
+        <option value="auto">ArturiMaster (Auto)</option>
+        <option value="thiaguit">Thiaguit+</option>
+        <option value="ultra">ULTRA</option>
+      </select>
+      <div class="glbl" style="margin-top:12px">Verbosity</div>
+      <select id="verbositySel" class="dsel" onchange="S.verbosity=this.value;savePref('verbosity',this.value)">
+        <option value="normal">Normal</option>
+        <option value="concise">Concise</option>
+        <option value="verbose">Verbose</option>
+      </select>
+    </div>
+
+    <!-- Help pane -->
+    <div id="dHelp" class="dpane">
+      <div class="glbl">Quick Start</div>
+      <div class="hi" style="cursor:default">
+        <div class="ht">💬 Chat</div>
+        <div class="hs">Ask anything — code, questions, analysis</div>
+      </div>
+      <div class="hi" style="cursor:default">
+        <div class="ht">⚡ Code</div>
+        <div class="hs">"Write a snake game in Python" → runs instantly</div>
+      </div>
+      <div class="hi" style="cursor:default">
+        <div class="ht">🌐 Search</div>
+        <div class="hs">"Latest news about AI" → live web results</div>
+      </div>
+      <div class="hi" style="cursor:default">
+        <div class="ht">🔍 Analyze</div>
+        <div class="hs">Paste code → "fix this" / "add feature X"</div>
+      </div>
+      <div class="glbl" style="margin-top:10px">Shortcuts</div>
+      <div class="hi" style="cursor:default;font-family:'JetBrains Mono',monospace;font-size:10px">
+        Enter → Send &nbsp;·&nbsp; Shift+Enter → Newline<br>
+        ESC → Close overlay &nbsp;·&nbsp; ✕ FAB → Exit script
+      </div>
+      <div class="glbl" style="margin-top:10px">About</div>
+      <div class="hi" style="cursor:default;font-size:10px;color:var(--t3)">
+        ArturitAI v15 — 25-Factor QA Engine<br>
+        Unlimited refinement · Transparent thinking<br>
+        Modular build · PWA-ready
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     MAIN SHELL
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="shell">
+
+  <!-- ── Header bar ── -->
+  <div id="hbar">
+    <button id="hbMenu"   onclick="openDrawer()"  title="Menu"><i class="fa fa-bars"></i></button>
+    <button id="hbNew"    onclick="newChat()"     title="New chat"><i class="fa fa-plus"></i></button>
+    <div id="hbTitle">ArturitAI</div>
+    <button id="hbSearch" onclick="toggleSearch()" title="Web search"><i class="fa fa-globe"></i></button>
+    <button id="hbThink"  onclick="toggleThinkPanel()" title="Thinking panel"><i class="fa fa-brain"></i></button>
+    <button id="hbCode"   onclick="toggleBlockPanel()" title="Code panel"><i class="fa fa-code"></i></button>
+    <button id="hbCon"    onclick="toggleConsole()" title="Console"><i class="fa fa-terminal"></i></button>
+  </div>
+
+  <!-- ── Model / status strip ── -->
+  <div id="modelStrip">
+    <span id="modelBadge">ArturiMaster</span>
+    <span id="pyStatus" class="py-status">⏳ Python loading…</span>
+    <span id="stripSep" class="strip-sep">·</span>
+    <span id="turnCount" class="strip-turn">Turn 0</span>
+  </div>
+
+  <!-- ── Thinking panel ── -->
+  <div id="thkPanel">
+    <div id="thkHeader">
+      <span id="thkLabel">Thinking…</span>
+      <button id="thkClose" onclick="closeThinkPanel()"><i class="fa fa-times"></i></button>
+    </div>
+    <div id="thkBody"></div>
+  </div>
+
+  <!-- ── Messages area ── -->
+  <div id="msgs"></div>
+
+  <!-- ── Block code panel ── -->
+  <div id="blkPanel">
+    <div id="blkHeader">
+      <span>Code Block</span>
+      <select id="blkLangSel2" onchange="document.getElementById('blkLangSel').value=this.value;S.blkLang=this.value"></select>
+      <button onclick="runBlkCode()">▶ Run</button>
+      <button onclick="copyBlkCode()">⎘ Copy</button>
+      <button onclick="clearBlkCode()">🗑 Clear</button>
+      <button onclick="toggleBlockPanel()">✕</button>
+    </div>
+    <textarea id="blkCode" placeholder="// Paste or type code here…" spellcheck="false"></textarea>
+  </div>
+
+  <!-- ── Console panel ── -->
+  <div id="conPanel">
+    <div id="conHeader">
+      <div id="conTabs">
+        <button class="ctab on" onclick="switchConTab(this,'conOut')">Output</button>
+        <button class="ctab"    onclick="switchConTab(this,'conTerm')">Terminal</button>
+      </div>
+      <button id="conClear" onclick="clearConsole()">Clear</button>
+      <button id="conClose" onclick="toggleConsole()">✕</button>
+    </div>
+    <div id="conOut"  class="cpane on"></div>
+    <div id="conTerm" class="cpane"></div>
+  </div>
+
+  <!-- ── Input bar ── -->
+  <div id="bar">
+    <div id="barInner">
+      <button id="barAttach" title="Attach file" onclick="triggerFileUpload()"><i class="fa fa-paperclip"></i></button>
+      <textarea id="inp" placeholder="Ask me to write code, search the web, or explain anything…"
+                rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button id="barSend" onclick="handleSend()"><i class="fa fa-paper-plane"></i></button>
+    </div>
+    <input id="fileInput" type="file" style="display:none" multiple onchange="handleFileUpload(event)">
+  </div>
+</div>
+
+<!-- ── Self-training status panel ── -->
+<div id="learnPanel">
+  <button class="lp-close" onclick="toggleLearnPanel()">✕</button>
+  <div class="lp-ttl">🧠 Self-Training Status</div>
+  <div id="lpStats">Loading…</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     JS — Load order matters: split → knowledge → qa → engine → ui → main
+     All modules share the same global scope (no ES modules) to preserve
+     the existing inter-module references without refactoring.
+     ══════════════════════════════════════════════════════════════════ -->
+<script src="js/split.js"     defer></script>
+<script src="js/knowledge.js" defer></script>
+<script src="js/qa.js"        defer></script>
+<script src="js/executor.js"  defer></script>
+<script src="js/thinking.js"  defer></script>
+<script src="js/engine.js"    defer></script>
+<script src="js/ui.js"        defer></script>
+<script src="js/main.js"      defer></script>
+
+<!-- Service Worker registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(function(reg) { console.log('[SW] Registered, scope:', reg.scope); })
+      .catch(function(err) { console.warn('[SW] Registration failed:', err); });
+  });
+}
+</script>
+</body>
+</html>
